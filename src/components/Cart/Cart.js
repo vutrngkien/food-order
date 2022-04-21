@@ -1,12 +1,14 @@
 import CartItem from "./CartItem";
 import styles from "./Cart.module.css";
 import Modal from "../UI/Modal";
-import { useContext, useState } from "react";
+import React, { useContext, useState } from "react";
 import CartContext from "../../store/cart-context";
 import Checkout from "./Checkout";
 
 const Card = (props) => {
   const [isOrder, setIsOrder] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [didSubmit, setDidSubmit] = useState(false);
   const cartCtx = useContext(CartContext);
 
   const hasItems = cartCtx.items.length > 0;
@@ -20,6 +22,17 @@ const Card = (props) => {
 
   const orderClickHandler = () => {
     setIsOrder(true);
+  };
+
+  const submitHandler = async (user) => {
+    setIsSubmitting(true);
+    await fetch(
+      "https://react-http-ad4b3-default-rtdb.asia-southeast1.firebasedatabase.app/user.json",
+      { method: "POST", body: JSON.stringify({ user, cart: cartCtx.items }) }
+    );
+    setIsSubmitting(false);
+    setDidSubmit(true);
+    cartCtx.clearCart();
   };
 
   const cartItems = (
@@ -49,16 +62,40 @@ const Card = (props) => {
       )}
     </div>
   );
-  return (
-    <Modal onClick={props.onHideCart}>
+
+  const cartOrder = (
+    <>
       {cartItems}
       <div className={styles.total}>
         <span>Total</span>
         <span>${cartCtx.totalAmount.toFixed(2)}</span>
       </div>
 
-      {isOrder && <Checkout onCancel={props.onHideCart} />}
+      {isOrder && (
+        <Checkout onConfirm={submitHandler} onCancel={props.onHideCart} />
+      )}
       {!isOrder && modalButton}
+    </>
+  );
+
+  const isSubmittingModalContent = <p>Sending order data...</p>;
+
+  const didSubmitModalContent = (
+    <React.Fragment>
+      <p>Successfully sent the order!</p>
+      <div className={styles.actions}>
+        <button className={styles.button} onClick={props.onHideCart}>
+          Close
+        </button>
+      </div>
+    </React.Fragment>
+  );
+  return (
+    <Modal onClick={props.onHideCart}>
+      {" "}
+      {!isSubmitting && !didSubmit && cartOrder}
+      {isSubmitting && isSubmittingModalContent}
+      {!isSubmitting && didSubmit && didSubmitModalContent}
     </Modal>
   );
 };

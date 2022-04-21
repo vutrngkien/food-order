@@ -47,6 +47,8 @@ const cartReducer = (state, action) => {
         newItems[itemIndex] = newItem;
       }
       return { items: newItems, totalAmount: newAmount };
+    case "CLEAR":
+      return cartInitState;
     default:
       throw new Error("Invalid action!");
   }
@@ -65,11 +67,16 @@ const CartProvider = (props) => {
     dispatchCartAction({ type: "REMOVE", id });
   };
 
+  const clearCart = () => {
+    dispatchCartAction({ type: "CLEAR" });
+  };
+
   const cartContext = {
     items: cartState.items,
     totalAmount: cartState.totalAmount,
     addItem: addItemToCartHandler,
     removeItem: removeItemFromCartHandler,
+    clearCart,
   };
   return (
     <CartContext.Provider value={cartContext}>
